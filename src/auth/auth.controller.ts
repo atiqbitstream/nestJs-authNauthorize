@@ -11,6 +11,10 @@ import {
 import { AuthService } from './auth.service';
 import { signInDTO } from './dto/signIn.dto';
 import { AuthGuard } from './auth.guard';
+import { RolesGuard } from './roles.guard';
+import { Roles } from './roles.decorator';
+import { Admin } from 'typeorm';
+import { Role } from './roles.enum';
 
 @Controller('auth')
 export class AuthController {
@@ -24,7 +28,9 @@ export class AuthController {
         return this.authService.signIn(signInDto.username, signInDto.password);
       }
 
-    @UseGuards(AuthGuard)
+
+    @UseGuards(AuthGuard,RolesGuard)
+     @Roles(Role.USER)
     @Get('profile')
     getProfile(@Request() req)
     {
