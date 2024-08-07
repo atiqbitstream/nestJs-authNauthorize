@@ -1,3 +1,4 @@
+import { User } from './../users/entities/user.entity';
 import {
   Body,
   Controller,
@@ -6,35 +7,37 @@ import {
   HttpStatus,
   Post,
   Request,
-  UseGuards
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { signInDTO } from './dto/signIn.dto';
 import { AuthGuard } from './auth.guard';
+import { Public } from 'src/public.decorator';
 import { RolesGuard } from './roles.guard';
 import { Roles } from './roles.decorator';
-import { Admin } from 'typeorm';
 import { Role } from './roles.enum';
 
 @Controller('auth')
 export class AuthController {
+  constructor(private authService: AuthService) {}
 
-    constructor(private authService:AuthService){}
+  @HttpCode(HttpStatus.OK)
+  @Public()
+  @Post('login')
+  signIn(@Body() signInDto: signInDTO) {
+    return this.authService.signIn(signInDto.username, signInDto.password);
+  }
 
-    @HttpCode(HttpStatus.OK)
-    
-    @Post('login')
-    signIn(@Body() signInDto: signInDTO) {
-        return this.authService.signIn(signInDto.username, signInDto.password);
-      }
+  @UseGuards(AuthGuard)
+  @Get('profile')
+  getProfile(@Request() req) {
+    return req.user;
+  }
 
-
-    @UseGuards(AuthGuard,RolesGuard)
-     @Roles(Role.USER)
-    @Get('profile')
-    getProfile(@Request() req)
-    {
-       return req.user;
-    }
-
+  @UseGuards(RolesGuard)
+  @Roles(Role.USER)
+  @Post('protected')
+  protectedRoute() {
+    return 'This route is protected by RolesGuard';
+  }
 }
