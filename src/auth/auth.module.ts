@@ -22,10 +22,10 @@ import { RolesGuard } from './roles.guard';
       provide: APP_GUARD,
       useClass: AuthGuard,
     },
-    {
-      provide: APP_GUARD,
-      useClass:RolesGuard
-    }
+    // {
+    //   provide: APP_GUARD,
+    //   useClass:RolesGuard
+    // }
   ]
 })
 export class AuthModule {}

@@ -9,4 +9,6 @@ export class signInDTO{
     @IsString()
     @IsNotEmpty()
     password:string;
+
+    
 }
