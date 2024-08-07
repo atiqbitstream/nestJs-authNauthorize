@@ -59,31 +59,13 @@ Whether you're a solo dev or part of a team, this project is designed to help yo
 
 
 
-## Appendix
-
-Any additional information goes here
-
-
 ## Author
 
 - [AtiqBytes](https://github.com/AtiqBytes)
-## Badges
-
-Add badges from somewhere like: [shields.io](https://shields.io/)
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 [![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://opensource.org/licenses/)
 [![AGPL License](https://img.shields.io/badge/license-AGPL-blue.svg)](http://www.gnu.org/licenses/agpl-3.0)
-
-## Color Reference
-
-| Color             | Hex                                                                |
-| ----------------- | ------------------------------------------------------------------ |
-| Example Color | ![#0a192f](https://via.placeholder.com/10/0a192f?text=+) #0a192f |
-| Example Color | ![#f8f8f8](https://via.placeholder.com/10/f8f8f8?text=+) #f8f8f8 |
-| Example Color | ![#00b48a](https://via.placeholder.com/10/00b48a?text=+) #00b48a |
-| Example Color | ![#00d1a0](https://via.placeholder.com/10/00b48a?text=+) #00d1a0 |
-
 
 ## Contributing
 
@@ -166,37 +148,6 @@ A: Check the server logs for error messages, ensure your environment variables a
 If you have any feedback, please reach out to me at https://www.linkedin.com/in/atiq-ur-rehman-1314712aa/
 
 
-## 🚀 About Me
-I'm a full stack developer...
-
-wokring in Angular | 
-NestJs | 
-Django |
-Amazon Aws
-# Hi, I'm Atiq Ur Rehman! 👋
-
-
-## 🔗 Links
-[![portfolio](https://img.shields.io/badge/my_portfolio-000?style=for-the-badge&logo=ko-fi&logoColor=white)](https://github.com/AtiqBytes)
-[![linkedin](https://img.shields.io/badge/linkedin-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/atiq-ur-rehman-1314712aa/)
-
-
-
-## Other Common Github Profile Sections
-👩‍💻 I'm currently working on Backend
-
-🧠 I'm currently learning NestJs
-
-👯‍♀️ I'm looking to collaborate on full Stack Projects
-
-🤔 I'm looking for help with getting Internship
-
-
-
-## 🛠 Skills
-Typescript, Javascript, HTML, CSS, Python
-
-
 ## Installation
 
 Install my-project with npm
@@ -274,7 +225,19 @@ To run tests, run the following command
 ```
 unit tests : 
  ```
- 
+
+
+
+
+## 🚀 About Me
+
+# Hi, I'm Atiq Ur Rehman! 👋
+
+
+## 🔗 Links
+[![portfolio](https://img.shields.io/badge/my_portfolio-000?style=for-the-badge&logo=ko-fi&logoColor=white)](https://github.com/AtiqBytes)
+[![linkedin](https://img.shields.io/badge/linkedin-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/atiq-ur-rehman-1314712aa/)
+
  npm run test
  ```
 
