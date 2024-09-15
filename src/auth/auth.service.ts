@@ -14,14 +14,26 @@ export class AuthService {
       async signIn(
         username: string,
         pass: string,
-      ): Promise<{ access_token: string }> {
+      ): Promise<{ accessToken: string, refreshToken:string }> {
         const user = await this.usersService.findOne(username);
         if (user?.password !== pass) {
           throw new UnauthorizedException();
         }
         const payload = { sub: user.id, username: user.username, roles:[user.role] };
-        return {
-          access_token: await this.jwtService.signAsync(payload),
-        };
+        // return {
+        //   access_token: await this.jwtService.signAsync(payload),
+        // };
+
+        const accessToken = await this.jwtService.signAsync(payload,{
+          expiresIn:'1h',
+        })
+
+        const refreshToken = await this.jwtService.signAsync(payload,{
+          expiresIn:'7d',
+          secret : 'refresh-access-token'
+        })
+
+        return {accessToken,refreshToken}
       }
+      
 }
