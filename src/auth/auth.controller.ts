@@ -28,6 +28,12 @@ export class AuthController {
     return this.authService.signIn(signInDto.username, signInDto.password);
   }
 
+  @Public()
+  @Post('refresh')
+async refreshToken(@Body() refreshToken: string) {
+  return this.authService.refreshToken(refreshToken);
+}
+
   @UseGuards(AuthGuard)
   @Get('profile')
   getProfile(@Request() req) {
