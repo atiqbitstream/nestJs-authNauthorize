@@ -35,5 +35,28 @@ export class AuthService {
 
         return {accessToken,refreshToken}
       }
+
+      async refreshToken( refreshToken: string): Promise<{ access_token: string }> {
+        try {
+          const payload = await this.jwtService.verifyAsync(refreshToken, {
+            secret: 'refresh-token-secret',
+          });
+          
+          const user = await this.usersService.findOne(payload.sub);
+          const newPayload = { 
+            sub: user.id, 
+            username: user.username, 
+            roles: [user.role] 
+          };
+          
+          const newAccessToken = await this.jwtService.signAsync(newPayload, {
+            expiresIn: '1h',
+          });
+          
+          return { access_token: newAccessToken };
+        } catch (error) {
+          throw new UnauthorizedException();
+        }
+      }
       
 }
