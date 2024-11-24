@@ -163,7 +163,7 @@ A: Check the server logs for error messages, ensure your environment variables a
 
 ## Feedback
 
-If you have any feedback, please reach out to me at https://www.linkedin.com/in/atiq-ur-rehman-1314712aa/
+If you have any feedback, please reach out to me at 
 
 
 ## 🚀 About Me
