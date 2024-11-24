@@ -66,7 +66,7 @@ Any additional information goes here
 
 ## Author
 
-- [AtiqBytes](https://github.com/atiqbitstream)
+- [Atiqbitstream](https://github.com/atiqbitstream)
 ## Badges
 
 Add badges from somewhere like: [shields.io](https://shields.io/)
@@ -173,7 +173,7 @@ wokring in Angular |
 NestJs | 
 Django |
 Amazon Aws
-# Hi, I'm Atiq Ur Rehman! 👋
+# Hi, I'm Atiq Khan! 👋
 
 
 ## 🔗 Links
