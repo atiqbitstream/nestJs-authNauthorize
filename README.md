@@ -1,316 +1,291 @@
+<div align="center">
 
-# NestJs Authentication & Authorization
+# NestJS Authentication and Authorization
 
-Are you tired of worrying about user authentication and authorization in your NestJS applications? Look no further! This project provides a comprehensive, battle-tested solution for managing user access and permissions, so you can focus on building amazing apps.
+![NestJS](https://img.shields.io/badge/NestJS-10-E0234E)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6)
+![JWT](https://img.shields.io/badge/Auth-JWT-000000)
+![TypeORM](https://img.shields.io/badge/ORM-TypeORM-FE0803)
+![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-336791)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-Built for developers, by developers
+**A NestJS REST API example that shows JWT authentication and role based access control using guards, custom decorators, TypeORM, and PostgreSQL.**
 
-Whether you're a solo dev or part of a team, this project is designed to help you:
+</div>
 
-1. Secure your app with robust authentication and authorization
+> [!NOTE]
+> This is a learning and demo project. It follows the official NestJS guides on
+> [authentication](https://docs.nestjs.com/security/authentication) and
+> [authorization](https://docs.nestjs.com/security/authorization). It is meant
+> for study and as a starting point, not for production use as is. See the
+> [Security notes](#security-notes) and [Roadmap](#roadmap) sections before
+> using it.
 
-2. Scale your solution with confidence
+## Table of Contents
 
-3. Customize access control to fit your unique needs
+- [About](#about)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Getting Started](#getting-started)
+- [API Reference](#api-reference)
+- [Project Structure](#project-structure)
+- [Configuration](#configuration)
+- [Security notes](#security-notes)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
 
+## About
+
+This project is a small NestJS API that demonstrates two related ideas:
+
+1. **Authentication** with JSON Web Tokens. A user logs in with a username and
+   password and receives a signed JWT. The token is then sent on later requests
+   as a `Bearer` token.
+2. **Authorization** with role based access control. Each user has a role
+   (`user` or `admin`). A guard checks the role encoded in the JWT before it
+   allows access to protected routes.
+
+The token is signed and verified directly with the `@nestjs/jwt` package. This
+project does not use Passport. A global `AuthGuard` protects every route by
+default, and a `@Public()` decorator marks the routes that should stay open
+(login and user signup). A separate `RolesGuard` plus a `@Roles()` decorator
+enforce role requirements on specific routes.
+
+## Features
+
+- JWT authentication using `@nestjs/jwt` (no Passport).
+- A global `AuthGuard` that protects all routes by default.
+- A `@Public()` decorator to opt routes out of the global guard.
+- Role based access control with a `RolesGuard` and a `@Roles()` decorator.
+- Roles defined as a TypeScript enum (`user`, `admin`) and stored on the user.
+- Request validation with `class-validator` DTOs.
+- TypeORM with a PostgreSQL database and a `User` entity.
+- Configuration through environment variables with `@nestjs/config`.
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Framework | NestJS 10 |
+| Language | TypeScript 5 |
+| Authentication | `@nestjs/jwt` (JSON Web Tokens) |
+| Authorization | Custom guards and decorators (RBAC) |
+| ORM | TypeORM 0.3 |
+| Database | PostgreSQL (`pg` driver) |
+| Validation | class-validator, class-transformer |
+| Config | `@nestjs/config` |
+| Testing | Jest, Supertest |
+
+## Architecture
+
+The diagram below shows how a request flows through the guards. The global
+`AuthGuard` runs first and verifies the JWT, unless the route is marked
+`@Public()`. Routes that also use the `RolesGuard` then check the user's role.
+
+```mermaid
+flowchart TD
+    Client[Client] -->|HTTP request| Guard{AuthGuard<br/>global}
+    Guard -->|"@Public() route"| Handler[Route handler]
+    Guard -->|No Bearer token| Reject1[401 Unauthorized]
+    Guard -->|Verify JWT| Valid{Token valid?}
+    Valid -->|No| Reject2[401 Unauthorized]
+    Valid -->|Yes| Roles{RolesGuard<br/>on route?}
+    Roles -->|No roles required| Handler
+    Roles -->|Role matches| Handler
+    Roles -->|Role does not match| Reject3[Access denied]
+    Handler --> Response[Response]
+```
+
+Login itself is a public route. The service checks the username and password,
+then signs a JWT that carries the user id, username, and roles.
+
+```mermaid
+sequenceDiagram
+    participant U as Client
+    participant A as AuthController
+    participant S as AuthService
+    participant D as Database
+    U->>A: POST /auth/login (username, password)
+    A->>S: signIn(username, password)
+    S->>D: find user by username
+    D-->>S: user record
+    S-->>U: access_token (JWT)
+    U->>A: GET /auth/profile (Bearer token)
+    A-->>U: decoded user payload
+```
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18 or newer and npm.
+- A running PostgreSQL database.
+
+### Installation
+
+```bash
+git clone https://github.com/atiqbitstream/nestJs-authNauthorize.git
+cd nestJs-authNauthorize
+npm install
+```
+
+### Configuration
+
+Create a `.env` file in the project root with your database settings. See the
+[Configuration](#configuration) section for the full list of variables.
+
+```bash
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=your_password
+DB_DATABASE=authdemo
+```
+
+### Run
+
+```bash
+# development with file watching
+npm run start:dev
+
+# plain start
+npm run start
+
+# production build and run
+npm run build
+npm run start:prod
+```
+
+The API listens on `http://localhost:3000`.
+
+TypeORM runs with `synchronize: true`, so the database tables are created
+automatically from the entities on startup. This is convenient for local
+development but should not be used in production.
+
+### Tests
+
+```bash
+# unit tests
+npm run test
+
+# end to end tests
+npm run test:e2e
+
+# coverage
+npm run test:cov
+```
+
+> [!NOTE]
+> The unit and e2e tests are the default NestJS scaffold tests and are not yet
+> customized for this project's logic.
 
 ## API Reference
 
-#### Create a User
+All routes are protected by the global `AuthGuard` unless marked public. Send
+the token as `Authorization: Bearer <access_token>`.
 
-```http
-  POST http://localhost:3000/users
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| `POST` | `/users` | Public | Create a user. Body: `username`, `password`, `role`. |
+| `POST` | `/auth/login` | Public | Log in and receive a JWT. Body: `username`, `password`. |
+| `GET` | `/auth/profile` | Bearer token | Return the decoded JWT payload of the current user. |
+| `POST` | `/auth/protected` | Bearer token, role `user` | Example route protected by the `RolesGuard`. |
+| `GET` | `/users` | Bearer token | Stub. Returns a placeholder string (see Roadmap). |
+| `PATCH` | `/users/:id` | Bearer token | Stub. Returns a placeholder string (see Roadmap). |
+| `DELETE` | `/users/:id` | Bearer token | Stub. Returns a placeholder string (see Roadmap). |
+
+Example login request:
+
+```bash
+curl -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "alice", "password": "secret"}'
 ```
 
-| Parameter | Type     | Description                |
-| :-------- | :------- | :------------------------- |
-| `username,password` | `string` | **Required**. Running database |
+The login response is a JSON object with the token:
 
-#### Login User
-
-```http
-  POST http://localhost:3000/auth/login/
+```json
+{ "access_token": "<jwt>" }
 ```
 
-| Parameter | Type     | Description                       |
-| :-------- | :------- | :-------------------------------- |
-| `username,password`      | `string` | **Required**. Jwt Bearer Token |
+> [!NOTE]
+> The signed JWT expires after 60 seconds by default. You can change this in
+> `src/auth/auth.module.ts` (`signOptions.expiresIn`).
 
-#### View User Profile
+## Project Structure
 
-```http
-  GET http://localhost:3000/auth/profile
+```text
+src/
+  app.module.ts          Root module, wires TypeORM and config
+  main.ts                Bootstrap, listens on port 3000
+  public.decorator.ts    @Public() decorator and metadata key
+  auth/
+    auth.controller.ts   login, profile, and a protected route
+    auth.service.ts      Validates credentials and signs the JWT
+    auth.guard.ts        Global guard that verifies the JWT
+    auth.module.ts       Registers JwtModule and the global AuthGuard
+    constants.ts         JWT secret placeholder (replace it)
+    roles.guard.ts       Checks the user's role against required roles
+    roles.decorator.ts   @Roles() decorator
+    roles.enum.ts        Role enum (user, admin)
+    dto/signIn.dto.ts    Login request validation
+  users/
+    users.controller.ts  Create user and CRUD stubs
+    users.service.ts     User lookup and create with TypeORM
+    users.module.ts      Users module
+    entities/user.entity.ts  User entity with role column
+    dto/                 Create and update user DTOs
 ```
 
-| Parameter | Type     | Description                       |
-| :-------- | :------- | :-------------------------------- |
-| `username,password`      | `string` | **Required**. Jwt Bearer Token |
+## Configuration
 
-#### View Protected Route (Based On Role based Access)
+The app reads these environment variables through `@nestjs/config`. Define them
+in a `.env` file at the project root.
 
-```http
-  POST http://localhost:3000/auth/protected
-```
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `DB_HOST` | PostgreSQL host | `localhost` |
+| `DB_PORT` | PostgreSQL port | `5432` |
+| `DB_USERNAME` | Database user | `postgres` |
+| `DB_PASSWORD` | Database password | `your_password` |
+| `DB_DATABASE` | Database name | `authdemo` |
 
-| Parameter | Type     | Description                       |
-| :-------- | :------- | :-------------------------------- |
-| `username,password`      | `string` | **Required**. Jwt Bearer Token |
+The JWT signing secret is set in `src/auth/constants.ts`. It currently holds the
+placeholder value from the NestJS docs. Replace it with a strong secret and move
+it out of source control before any real use. See [Security notes](#security-notes).
 
+## Security notes
 
+This project is a learning example. A few things are intentionally simple and
+must be hardened before any real deployment:
 
+- **Passwords are stored and compared in plain text.** Add password hashing,
+  for example with `bcrypt`, before storing or checking credentials.
+- **The JWT secret lives in `src/auth/constants.ts` as a placeholder.** Move it
+  to an environment variable and use a long, random value.
+- **`synchronize: true` is enabled.** Use migrations instead for production
+  schemas.
 
-## Appendix
+## Roadmap
 
-Any additional information goes here
-
-
-## Author
-
-- [Atiqbitstream](https://github.com/atiqbitstream)
-## Badges
-
-Add badges from somewhere like: [shields.io](https://shields.io/)
-
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
-[![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://opensource.org/licenses/)
-[![AGPL License](https://img.shields.io/badge/license-AGPL-blue.svg)](http://www.gnu.org/licenses/agpl-3.0)
-
-## Color Reference
-
-| Color             | Hex                                                                |
-| ----------------- | ------------------------------------------------------------------ |
-| Example Color | ![#0a192f](https://via.placeholder.com/10/0a192f?text=+) #0a192f |
-| Example Color | ![#f8f8f8](https://via.placeholder.com/10/f8f8f8?text=+) #f8f8f8 |
-| Example Color | ![#00b48a](https://via.placeholder.com/10/00b48a?text=+) #00b48a |
-| Example Color | ![#00d1a0](https://via.placeholder.com/10/00b48a?text=+) #00d1a0 |
-
+- [ ] Hash passwords with `bcrypt` instead of storing them in plain text.
+- [ ] Move the JWT secret to an environment variable.
+- [ ] Implement the `findAll`, `update`, and `remove` user service methods (currently stubs).
+- [ ] Add real unit and e2e tests for the auth and users logic.
+- [ ] Add a refresh token flow and a configurable token lifetime.
+- [ ] Ship a `.env.example` file.
 
 ## Contributing
 
-Contributions are always welcome!
-
-See `contributing.md` for ways to get started.
-
-Please adhere to this project's `code of conduct`.
-
-
-## Demo
-
-
-
-## Deployment
-
-To deploy this project run
-
-```bash
-  npm run start:dev
-```
-
-
-## Documentation
-
-1.  [Authentication](https://docs.nestjs.com/security/authentication)
-
-2.  [Authorization](https://docs.nestjs.com/security/authorization)
-
-
-## Environment Variables
-
-To run this project, you will need to add the following environment variables to your .env file. You can customize it the way you want :
-
-`DB_PORT='5432'`
-
-`DB_USERNAME='postgres'`
-
-`DB_PASSWORD='root'`
-
-`DB_DATABASE='authdemo'`
-
-
-
-
-
-
-
-
-#### Q: How do I troubleshoot issues with authentication?
-A: Check the console logs for error messages, ensure your environment variables are set correctly, and verify your database connection.
-
-#### Q: Can I customize the authentication flow?
-A: Yes, you can modify the authentication flow by editing the auth.controller.ts and auth.service.ts files.
-
-#### Q: What if I encounter a "401 Unauthorized" error?
-
-A: Ensure your JWT token is valid, not expired, and correctly formatted. Also, check your role-based access control settings.
-
-#### Q: How do I handle errors when creating a new user?
-A: Catch and handle errors thrown by the users.service.ts file, such as duplicate usernames or invalid input.
-
-#### Q: Can I use this project with a different database?
-A: Yes, you can modify the database.module.ts file to support a different database provider.
-
-#### Q: What if I encounter a "500 Internal Server Error"?
-A: Check the server logs for error messages, ensure your environment variables are set correctly, and verify your database connection.
-## Features
-
-- Role-Based Access Control
-- JSON Web Token Authentication
-- Customizable Authentication Flow
-- Environment Variable Configuration
-- Database Support
-- Error Handling and Logging
-- Cross-Platform Compatibility
-
-## Feedback
-
-If you have any feedback, please reach out to me at 
-
-
-## 🚀 About Me
-I'm a full stack developer...
-
-wokring in Angular | 
-NestJs | 
-Django |
-Amazon Aws
-# Hi, I'm Atiq Khan! 👋
-
-
-## 🔗 Links
-[![portfolio](https://img.shields.io/badge/my_portfolio-000?style=for-the-badge&logo=ko-fi&logoColor=white)](https://github.com/atiqbitstream)
-[![linkedin]()
-
-
-
-## Other Common Github Profile Sections
-👩‍💻 I'm currently working on Backend
-
-🧠 I'm currently learning NestJs
-
-👯‍♀️ I'm looking to collaborate on full Stack Projects
-
-🤔 I'm looking for help with getting Internship
-
-
-
-## 🛠 Skills
-Typescript, Javascript, HTML, CSS, Python
-
-
-## Installation
-
-Install my-project with npm
-
-```bash
-  cd my-project
-  npm install 
-  
-```
-    
-## Lessons Learned
-
-## Authorization with Enum Files:
-
-Files Involved: role.enum.ts
-- I learned that we can manage authorization effectively using enum files.
-- By defining roles such as admin and user in role.enum.ts, we can then add an extra column, role, to an entity (e.g., user.entity.ts)
-- This setup allows the database to recognize which entity has which role and apply the appropriate permissions.
-
-## Defining Roles in DTOs:
-
-Files Involved: create-user.dto.ts
-
-- When creating Data Transfer Objects (DTOs), such as create-user.dto.ts, I included an additional attribute called role of type Role.
-- This ensures that when creating a user, the backend expects the role to be part of the request structure.
-
-## Role Decorator and Guard:
-
-Files Involved: role.decorator.ts, roles.guard.ts
-
-- To utilize the role variable, I created a role decorator (role.decorator.ts).
-- This decorator is applied to routes, such as a signup route, and allows specifying which roles (e.g., user or admin) are required.
-
--  The role guard (roles.guard.ts) is then used to enforce these role requirements on the route.
-
-## Issue with Global Auth Guard:
-
-## Files Involved: auth.module.ts, auth.guard.ts
-- I encountered an issue where signup and signin routes were not functioning correctly.
-- The problem was that the authentication guard (auth.guard.ts) was registered globally in auth.module.ts, applying it to all routes.
-- Since signup and signin should not require a token, this setup caused problems. The solution was to use a public decorator on the signup route, allowing access without restriction.
-
-## JWT Payload and Role Encoding:
-
-Files Involved: auth.service.ts, jwt.strategy.ts
-
-- Another issue arose when I could not access route protected by the role decorator.
--  After investigation, I discovered that the JWT payload was only encoding the user ID and username, not the role.
--  As a result, the system could not verify the user's role.
--  To resolve this, I included the role in the JWT payload within auth.service.ts and updated jwt.strategy.ts accordingly.
-- With this change, access to protected routes based on roles began functioning correctly.
-
+Contributions and suggestions are welcome. Open an issue to discuss a change, or
+send a pull request.
 
 ## License
 
-[MIT](https://choosealicense.com/licenses/mit/)
+Distributed under the MIT License. See [LICENSE](LICENSE) for details.
 
+## Author
 
-![Logo](https://docs.nestjs.com/assets/logo-small-gradient.svg)
-
-
-## Related
-
-Here are some related projects
-
-[Awesome README](https://github.com/matiassingers/awesome-readme)
-
-
-## Running Tests
-
-To run tests, run the following command
-
-```bash
-  npm run test
-```
-unit tests : 
- ```
- 
- npm run test
- ```
-
- e2e tests : 
-```
-$ npm run test:e2e
-```
-test coverage: 
-```
-
- npm run test:cov
-```
-
-## Run Locally
-
-Clone the project
-
-```bash
-  git clone https://github.com/atiqbitstream/nestjs-security-authentication-authorization.git
-```
-
-Go to the project directory
-
-```bash
-  cd my-project
-```
-
-Install dependencies
-
-```bash
-  npm install
-```
-
-Start the server
-
-```bash
-  npm run start:dev
-```
-
+Built by [Atiq Khan](https://github.com/atiqbitstream).
